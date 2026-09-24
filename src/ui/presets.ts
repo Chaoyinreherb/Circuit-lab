@@ -292,7 +292,7 @@ export function getPresetCircuits(): PresetCircuit[] {
     {
       id: 'colpitts_osc',
       name: '5. LC コルピッツ発振回路 (正弦波発振)',
-      description: 'L(1mH)と容量分圧(C1, C2)による自励正弦波発振回路 (電源9V)',
+      description: 'L(20mH)と容量分圧(C1, C2)による自励正弦波発振回路 (電源9V, 約2.3kHz)',
       elements: [
         {
           ...registry.createElement('dc_voltage', 80, 160)!,
@@ -300,92 +300,98 @@ export function getPresetCircuits(): PresetCircuit[] {
           params: { voltage: 9 }
         },
         {
-          ...registry.createElement('resistor', 180, 140)!,
+          ...registry.createElement('resistor', 180, 120)!,
           id: 'r_b1',
           rotation: 90,
           params: { resistance: 22000 }
         },
         {
-          ...registry.createElement('resistor', 180, 260)!,
+          ...registry.createElement('resistor', 180, 240)!,
           id: 'r_b2',
           rotation: 90,
           params: { resistance: 4700 }
         },
         {
-          ...registry.createElement('resistor', 280, 140)!,
-          id: 'r_c_osc',
+          ...registry.createElement('capacitor', 180, 340)!,
+          id: 'c_b_bypass',
           rotation: 90,
-          params: { resistance: 1000 }
+          params: { capacitance: 10e-6 }
         },
         {
-          ...registry.createElement('resistor', 280, 320)!,
+          ...registry.createElement('resistor', 290, 120)!,
+          id: 'r_c_osc',
+          rotation: 90,
+          params: { resistance: 2200 }
+        },
+        {
+          ...registry.createElement('npn', 270, 210)!,
+          id: 'q_osc',
+          params: { beta: 200 }
+        },
+        {
+          ...registry.createElement('resistor', 270, 320)!,
           id: 'r_e_osc',
           rotation: 90,
           params: { resistance: 470 }
         },
         {
-          ...registry.createElement('npn', 250, 230)!,
-          id: 'q_osc',
-          params: { beta: 200 }
-        },
-        {
-          ...registry.createElement('inductor', 380, 140)!,
+          ...registry.createElement('inductor', 390, 120)!,
           id: 'l_tank',
           rotation: 90,
-          params: { inductance: 1e-3 }
+          params: { inductance: 20e-3 }
         },
         {
-          ...registry.createElement('capacitor', 450, 140)!,
+          ...registry.createElement('capacitor', 410, 220)!,
           id: 'c_tank1',
           rotation: 90,
-          params: { capacitance: 100e-9 }
+          params: { capacitance: 470e-9 }
         },
         {
-          ...registry.createElement('capacitor', 450, 240)!,
+          ...registry.createElement('capacitor', 340, 320)!,
           id: 'c_tank2',
           rotation: 90,
-          params: { capacitance: 100e-9 }
+          params: { capacitance: 4.7e-6 }
         },
         {
-          ...registry.createElement('ground', 250, 390)!,
+          ...registry.createElement('ground', 270, 400)!,
           id: 'gnd_osc'
         }
       ],
       wires: [
-        // VCC 9V
+        // VCC 9V Rail
         { id: 'ow1', fromCompId: 'v_vcc_osc', fromPinId: 'pos', toCompId: 'r_b1', toPinId: 'pin1' },
         { id: 'ow2', fromCompId: 'v_vcc_osc', fromPinId: 'pos', toCompId: 'r_c_osc', toPinId: 'pin1' },
         { id: 'ow3', fromCompId: 'v_vcc_osc', fromPinId: 'pos', toCompId: 'l_tank', toPinId: 'pin1' },
-        { id: 'ow4', fromCompId: 'v_vcc_osc', fromPinId: 'pos', toCompId: 'c_tank1', toPinId: 'pin1' },
-        // Collector to tank
-        { id: 'ow5', fromCompId: 'r_c_osc', fromPinId: 'pin2', toCompId: 'q_osc', toPinId: 'collector' },
-        { id: 'ow6', fromCompId: 'q_osc', fromPinId: 'collector', toCompId: 'l_tank', toPinId: 'pin2' },
-        { id: 'ow7', fromCompId: 'l_tank', fromPinId: 'pin2', toCompId: 'c_tank1', toPinId: 'pin2' },
-        // C1 to C2
-        { id: 'ow8', fromCompId: 'c_tank1', fromPinId: 'pin2', toCompId: 'c_tank2', toPinId: 'pin1' },
-        // Feedback from C1/C2 junction to Emitter
-        { id: 'ow9', fromCompId: 'c_tank2', fromPinId: 'pin1', toCompId: 'q_osc', toPinId: 'emitter' },
-        { id: 'ow10', fromCompId: 'q_osc', fromPinId: 'emitter', toCompId: 'r_e_osc', toPinId: 'pin1' },
-        // Base bias
-        { id: 'ow11', fromCompId: 'r_b1', fromPinId: 'pin2', toCompId: 'r_b2', toPinId: 'pin1' },
-        { id: 'ow12', fromCompId: 'r_b1', fromPinId: 'pin2', toCompId: 'q_osc', toPinId: 'base' },
+        // Base bias & AC ground bypass
+        { id: 'ow4', fromCompId: 'r_b1', fromPinId: 'pin2', toCompId: 'r_b2', toPinId: 'pin1' },
+        { id: 'ow5', fromCompId: 'r_b1', fromPinId: 'pin2', toCompId: 'q_osc', toPinId: 'base' },
+        { id: 'ow6', fromCompId: 'r_b2', fromPinId: 'pin2', toCompId: 'c_b_bypass', toPinId: 'pin1' },
+        { id: 'ow7', fromCompId: 'c_b_bypass', fromPinId: 'pin2', toCompId: 'gnd_osc', toPinId: 'gnd' },
+        { id: 'ow7b', fromCompId: 'r_b2', fromPinId: 'pin2', toCompId: 'gnd_osc', toPinId: 'gnd' },
+        // Collector: connected to RC, L_tank, and C_tank1 top
+        { id: 'ow8', fromCompId: 'r_c_osc', fromPinId: 'pin2', toCompId: 'q_osc', toPinId: 'collector' },
+        { id: 'ow9', fromCompId: 'l_tank', fromPinId: 'pin2', toCompId: 'q_osc', toPinId: 'collector' },
+        { id: 'ow10', fromCompId: 'q_osc', fromPinId: 'collector', toCompId: 'c_tank1', toPinId: 'pin1' },
+        // Emitter: feedback from C_tank1 bottom, connected to RE and C_tank2
+        { id: 'ow11', fromCompId: 'c_tank1', fromPinId: 'pin2', toCompId: 'q_osc', toPinId: 'emitter' },
+        { id: 'ow12', fromCompId: 'q_osc', fromPinId: 'emitter', toCompId: 'r_e_osc', toPinId: 'pin1' },
+        { id: 'ow13', fromCompId: 'q_osc', fromPinId: 'emitter', toCompId: 'c_tank2', toPinId: 'pin1' },
         // Grounds
-        { id: 'ow13', fromCompId: 'r_b2', fromPinId: 'pin2', toCompId: 'gnd_osc', toPinId: 'gnd' },
         { id: 'ow14', fromCompId: 'r_e_osc', fromPinId: 'pin2', toCompId: 'gnd_osc', toPinId: 'gnd' },
         { id: 'ow15', fromCompId: 'c_tank2', fromPinId: 'pin2', toCompId: 'gnd_osc', toPinId: 'gnd' },
         { id: 'ow16', fromCompId: 'v_vcc_osc', fromPinId: 'neg', toCompId: 'gnd_osc', toPinId: 'gnd' }
       ],
       setupProbes: () => {
-        probeManager.probes.osc_ch1.x = 265;
-        probeManager.probes.osc_ch1.y = 210;
+        probeManager.probes.osc_ch1.x = 285;
+        probeManager.probes.osc_ch1.y = 190;
         probeManager.probes.osc_ch1.attachedTo = { type: 'pin', compId: 'q_osc', pinId: 'collector' };
 
-        probeManager.probes.osc_ch2.x = 265;
-        probeManager.probes.osc_ch2.y = 250;
+        probeManager.probes.osc_ch2.x = 285;
+        probeManager.probes.osc_ch2.y = 230;
         probeManager.probes.osc_ch2.attachedTo = { type: 'pin', compId: 'q_osc', pinId: 'emitter' };
 
-        probeManager.probes.osc_gnd.x = 250;
-        probeManager.probes.osc_gnd.y = 370;
+        probeManager.probes.osc_gnd.x = 270;
+        probeManager.probes.osc_gnd.y = 380;
         probeManager.probes.osc_gnd.attachedTo = { type: 'pin', compId: 'gnd_osc', pinId: 'gnd' };
       }
     }

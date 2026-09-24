@@ -421,17 +421,49 @@ export function drawWire(
   wire: Wire,
   p1: { x: number; y: number },
   p2: { x: number; y: number },
-  simTime: number
+  simTime: number,
+  isSelected: boolean = false,
+  isHovered: boolean = false
 ): void {
   const vColor = getVoltageColor(wire.voltage ?? 0);
 
-  // Glow line
+  // Outer glow if selected or hovered
+  if (isSelected) {
+    ctx.beginPath();
+    ctx.moveTo(p1.x, p1.y);
+    ctx.lineTo(p2.x, p2.y);
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 7;
+    ctx.stroke();
+  } else if (isHovered) {
+    ctx.beginPath();
+    ctx.moveTo(p1.x, p1.y);
+    ctx.lineTo(p2.x, p2.y);
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+    ctx.lineWidth = 6;
+    ctx.stroke();
+  }
+
+  // Core wire line
   ctx.beginPath();
   ctx.moveTo(p1.x, p1.y);
   ctx.lineTo(p2.x, p2.y);
-  ctx.strokeStyle = vColor;
-  ctx.lineWidth = 3;
+  ctx.strokeStyle = isSelected ? '#ffffff' : vColor;
+  ctx.lineWidth = isSelected ? 3.5 : 2.5;
   ctx.stroke();
+
+  // Handles at wire endpoints if selected
+  if (isSelected) {
+    [p1, p2].forEach(p => {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 5.5, 0, 2 * Math.PI);
+      ctx.fillStyle = '#0284c7';
+      ctx.fill();
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    });
+  }
 
   // Current animation: moving dots
   const current = wire.current ?? 0;
